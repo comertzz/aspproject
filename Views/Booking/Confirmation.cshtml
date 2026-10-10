@@ -1,0 +1,222 @@
+@model aspproject.Models.Booking
+
+@{
+    ViewData["Title"] = $"Rezervasyon Onayı - {Model.BookingCode}";
+}
+
+<div class="confirmation-container">
+    <div class="confirmation-hero">
+        <div class="confirmation-icon">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <h1>Rezervasyonunuz Başarıyla Alındı!</h1>
+        <p class="confirmation-subtitle">
+            Sayın <strong>@Model.FullName</strong>, araç kiralama rezervasyonunuz onaylanmıştır. Rezervasyon detayları <strong>@Model.Email</strong> adresinize gönderilmiştir.
+        </p>
+
+        <div class="pnr-badge-card">
+            <div class="pnr-label">REZERVASYON / PNR KODUNUZ</div>
+            <div class="pnr-code" id="pnrCode">@Model.BookingCode</div>
+            <div class="pnr-helper">Bu kodu rezervasyon takibi ve iptali için saklayınız.</div>
+            <button type="button" class="btn btn-outline-light btn-sm mt-2" onclick="copyPnr()">
+                <i class="bi bi-clipboard"></i> Kodu Kopyala
+            </button>
+        </div>
+    </div>
+
+    <div class="confirmation-content">
+        <div class="row g-4">
+            <!-- Left Column: Details -->
+            <div class="col-lg-8">
+                <!-- Vehicle Card -->
+                <div class="detail-block">
+                    <h3 class="detail-block-title">
+                        <i class="bi bi-car-front-fill me-2 text-primary"></i> Rezerve Edilen Araç
+                    </h3>
+                    <div class="confirmation-vehicle-row">
+                        <img src="@Model.Vehicle.ImageUrl" alt="@Model.Vehicle.DisplayName" class="conf-vehicle-img" />
+                        <div class="conf-vehicle-meta">
+                            <span class="badge bg-secondary mb-1">@Model.Vehicle.Segment</span>
+                            <h4>@Model.Vehicle.DisplayName</h4>
+                            <div class="specs-grid">
+                                <div><i class="bi bi-gear-fill"></i> @Model.Vehicle.Transmission Vites</div>
+                                <div><i class="bi bi-fuel-pump-fill"></i> @Model.Vehicle.FuelType</div>
+                                <div><i class="bi bi-people-fill"></i> @Model.Vehicle.SeatCount Kişilik</div>
+                                <div><i class="bi bi-briefcase-fill"></i> @Model.Vehicle.BaggageCount Valiz Kapasitesi</div>
+                                <div><i class="bi bi-speedometer2"></i> Günlük @Model.Vehicle.DailyMileageLimit km sınır</div>
+                                <div><i class="bi bi-shield-lock"></i> @Model.Vehicle.DepositAmount.ToString("N0") TL Depozito</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rental Details -->
+                <div class="detail-block">
+                    <h3 class="detail-block-title">
+                        <i class="bi bi-calendar2-check-fill me-2 text-success"></i> Teslimat ve Tarih Detayları
+                    </h3>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="info-tile">
+                                <span class="tile-label"><i class="bi bi-geo-alt-fill text-danger"></i> Alış Noktası & Tarihi</span>
+                                <strong>@Model.PickupLocation.Name</strong>
+                                <p>@Model.PickupDate.ToString("dd MMMM yyyy, dddd")</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="info-tile">
+                                <span class="tile-label"><i class="bi bi-geo-fill text-success"></i> İade Noktası & Tarihi</span>
+                                <strong>@Model.ReturnLocation.Name</strong>
+                                <p>@Model.ReturnDate.ToString("dd MMMM yyyy, dddd")</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="info-tile">
+                                <span class="tile-label"><i class="bi bi-clock-history"></i> Toplam Kiralama Süresi</span>
+                                <strong>@Model.TotalDays Gün</strong>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="info-tile">
+                                <span class="tile-label"><i class="bi bi-patch-check-fill text-primary"></i> Rezervasyon Durumu</span>
+                                <span class="badge bg-success fs-6">@Model.Status.ToString() (Onaylandı)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Driver Details -->
+                <div class="detail-block">
+                    <h3 class="detail-block-title">
+                        <i class="bi bi-person-badge-fill me-2 text-info"></i> Sürücü Bilgileri
+                    </h3>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Sürücü Adı Soyadı</small>
+                            <strong>@Model.FullName</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">T.C. / Pasaport No</small>
+                            <strong>@(Model.NationalId.Length > 4 ? Model.NationalId[..3] + "****" + Model.NationalId[^2..] : Model.NationalId)</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">E-posta</small>
+                            <strong>@Model.Email</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Telefon</small>
+                            <strong>@Model.Phone</strong>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.FlightNumber))
+                        {
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Uçuş Numarası</small>
+                                <strong>@Model.FlightNumber</strong>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Notes))
+                        {
+                            <div class="col-12">
+                                <small class="text-muted d-block">Müşteri Notu</small>
+                                <em>@Model.Notes</em>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Extras Included -->
+                <div class="detail-block">
+                    <h3 class="detail-block-title">
+                        <i class="bi bi-stars me-2 text-warning"></i> Seçilen Ekstra Paketler
+                    </h3>
+                    <ul class="extras-confirmation-list">
+                        <li class="@(Model.HasFullInsurance ? "included" : "not-included")">
+                            <i class="bi @(Model.HasFullInsurance ? "bi-check-circle-fill text-success" : "bi-dash-circle text-muted")"></i>
+                            Tam Kasko & Muafiyetsiz Güvence Paketi
+                        </li>
+                        <li class="@(Model.HasAdditionalDriver ? "included" : "not-included")">
+                            <i class="bi @(Model.HasAdditionalDriver ? "bi-check-circle-fill text-success" : "bi-dash-circle text-muted")"></i>
+                            Ek Sürücü Hizmeti
+                        </li>
+                        <li class="@(Model.HasChildSeat ? "included" : "not-included")">
+                            <i class="bi @(Model.HasChildSeat ? "bi-check-circle-fill text-success" : "bi-dash-circle text-muted")"></i>
+                            Çocuk / Bebek Koltuğu
+                        </li>
+                        <li class="@(Model.HasTollPass ? "included" : "not-included")">
+                            <i class="bi @(Model.HasTollPass ? "bi-check-circle-fill text-success" : "bi-dash-circle text-muted")"></i>
+                            HGS Otoyol Geçiş Paketi
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column: Financial Breakdown & Actions -->
+            <div class="col-lg-4">
+                <div class="finance-card">
+                    <h3>Fiyat ve Ödeme Dökümü</h3>
+                    <div class="finance-item">
+                        <span>Araç Kirası (@Model.TotalDays gün x @Model.DailyRate.ToString("N0") TL)</span>
+                        <strong>@Model.VehicleTotal.ToString("N0") TL</strong>
+                    </div>
+                    <div class="finance-item">
+                        <span>Ekstra Paketler</span>
+                        <strong>@Model.ExtrasTotal.ToString("N0") TL</strong>
+                    </div>
+                    <div class="finance-item total">
+                        <span>Toplam Tutar (KDV Dahil)</span>
+                        <strong class="total-amount">@Model.GrandTotal.ToString("N0") TL</strong>
+                    </div>
+
+                    <div class="deposit-badge-box">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-credit-card fs-4 text-warning me-2"></i>
+                            <div>
+                                <strong>Depozito: @Model.DepositAmount.ToString("N0") TL</strong>
+                                <small class="d-block text-muted">Teslim alma anında sürücünün kredi kartına bloke konur.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="actions-group mt-4">
+                        <button type="button" class="btn btn-outline-dark w-100 mb-2 py-2" onclick="window.print()">
+                            <i class="bi bi-printer me-1"></i> Rezervasyonu Yazdır / PDF
+                        </button>
+                        <a asp-controller="Booking" asp-action="Lookup" asp-route-code="@Model.BookingCode" asp-route-contact="@Model.Email"
+                           class="btn btn-outline-primary w-100 mb-2 py-2">
+                            <i class="bi bi-search me-1"></i> Rezervasyonumu Takip Et
+                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-primary w-100 py-2">
+                            <i class="bi bi-house me-1"></i> Ana Sayfaya Dön
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Office Pickup Instructions -->
+                <div class="pickup-guide-card mt-3">
+                    <h4><i class="bi bi-lightbulb-fill text-warning me-1"></i> Teslimat Sırasında Gerekenler</h4>
+                    <ul>
+                        <li>Geçerli Sürücü Belgesi (en az @Model.Vehicle.MinLicenseYears yıllık)</li>
+                        <li>T.C. Kimlik Kartı veya Pasaport</li>
+                        <li>Sürücü adına düzenlenmiş kredi kartı (depozito için)</li>
+                    </ul>
+                    <div class="help-phone mt-3">
+                        <i class="bi bi-telephone-outbound-fill text-primary"></i> 7/24 Destek: <strong>0850 123 45 67</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function copyPnr() {
+            const pnrText = document.getElementById("pnrCode").innerText;
+            navigator.clipboard.writeText(pnrText).then(function() {
+                alert("PNR Kodu kopyalandı: " + pnrText);
+            }).catch(function() {
+                alert("Kopyalanamadı: " + pnrText);
+            });
+        }
+    </script>
+}

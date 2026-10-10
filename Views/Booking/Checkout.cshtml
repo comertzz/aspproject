@@ -1,0 +1,463 @@
+@model aspproject.Models.BookingCheckoutViewModel
+
+@{
+    ViewData["Title"] = $"{Model.Vehicle.DisplayName} - Rezervasyon Yap";
+}
+
+<div class="checkout-container">
+    <div class="checkout-header">
+        <a asp-controller="Home" asp-action="Index" class="back-link">
+            <i class="bi bi-arrow-left"></i> Araç Seçimine Dön
+        </a>
+        <h1>Rezervasyonunu Tamamla</h1>
+        <p class="text-muted">Seçtiğin araç için bilgileri doldur ve anında rezervasyonunu oluştur.</p>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Lütfen formdaki hataları düzeltiniz:</strong>
+            <div asp-validation-summary="All" class="mt-2 text-danger small"></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+        </div>
+    }
+
+    <form asp-controller="Booking" asp-action="Checkout" method="post" id="checkoutForm" class="checkout-layout">
+        <input type="hidden" asp-for="Request.VehicleId" />
+
+        <!-- LEFT COLUMN: FORM DETAILS -->
+        <div class="checkout-main">
+            <!-- 1. Kiralama ve Lokasyon Detayları -->
+            <div class="checkout-card">
+                <div class="checkout-card-header">
+                    <span class="step-badge">1</span>
+                    <div>
+                        <h2>Kiralama Bilgileri</h2>
+                        <small>Teslim alma ve iade noktaları ile kiralama tarihleri</small>
+                    </div>
+                </div>
+                <div class="checkout-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Request.PickupLocationId" class="form-label fw-bold">Alış Lokasyonu</label>
+                            <select class="form-select" asp-for="Request.PickupLocationId" id="pickupLocationSelect">
+                                @foreach (var loc in Model.Locations)
+                                {
+                                    <option value="@loc.Id">@loc.Name (@loc.City)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Request.PickupLocationId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Request.ReturnLocationId" class="form-label fw-bold">İade Lokasyonu</label>
+                            <select class="form-select" asp-for="Request.ReturnLocationId" id="returnLocationSelect">
+                                @foreach (var loc in Model.Locations)
+                                {
+                                    <option value="@loc.Id">@loc.Name (@loc.City)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Request.ReturnLocationId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Request.PickupDate" class="form-label fw-bold">Alış Tarihi</label>
+                            <input type="date" class="form-control" asp-for="Request.PickupDate" id="pickupDateInput"
+                                   min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="Request.PickupDate" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Request.ReturnDate" class="form-label fw-bold">Dönüş Tarihi</label>
+                            <input type="date" class="form-control" asp-for="Request.ReturnDate" id="returnDateInput"
+                                   min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="Request.ReturnDate" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Ek Hizmetler ve Güvence Paketleri -->
+            <div class="checkout-card">
+                <div class="checkout-card-header">
+                    <span class="step-badge">2</span>
+                    <div>
+                        <h2>Ek Hizmetler ve Güvence</h2>
+                        <small>Yolculuğunu güvenli ve konforlu hale getirecek seçenekler</small>
+                    </div>
+                </div>
+                <div class="checkout-card-body extras-list">
+                    <!-- Tam Kasko -->
+                    <label class="extra-item" for="extraInsurance">
+                        <div class="form-check m-0">
+                            <input class="form-check-input extra-checkbox" type="checkbox" asp-for="Request.HasFullInsurance" id="extraInsurance"
+                                   data-type="daily" data-price="@Model.InsuranceDailyPrice" />
+                        </div>
+                        <div class="extra-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div class="extra-info">
+                            <strong>Tam Güvence / Muafiyetsiz Kasko</strong>
+                            <p>Kaza, çizik ve lastik/cam hasarlarında sıfır sorumluluk güvencesi.</p>
+                        </div>
+                        <div class="extra-price">
+                            <strong>+@Model.InsuranceDailyPrice.ToString("N0") TL</strong>
+                            <span>/ gün</span>
+                        </div>
+                    </label>
+
+                    <!-- Ek Sürücü -->
+                    <label class="extra-item" for="extraDriver">
+                        <div class="form-check m-0">
+                            <input class="form-check-input extra-checkbox" type="checkbox" asp-for="Request.HasAdditionalDriver" id="extraDriver"
+                                   data-type="daily" data-price="@Model.AdditionalDriverDailyPrice" />
+                        </div>
+                        <div class="extra-icon">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <div class="extra-info">
+                            <strong>Ek Sürücü</strong>
+                            <p>Yolculuk boyunca direksiyonu paylaşabileceğin ikinci bir sürücü ekle.</p>
+                        </div>
+                        <div class="extra-price">
+                            <strong>+@Model.AdditionalDriverDailyPrice.ToString("N0") TL</strong>
+                            <span>/ gün</span>
+                        </div>
+                    </label>
+
+                    <!-- Çocuk Koltuğu -->
+                    <label class="extra-item" for="extraChildSeat">
+                        <div class="form-check m-0">
+                            <input class="form-check-input extra-checkbox" type="checkbox" asp-for="Request.HasChildSeat" id="extraChildSeat"
+                                   data-type="daily" data-price="@Model.ChildSeatDailyPrice" />
+                        </div>
+                        <div class="extra-icon">
+                            <i class="bi bi-heart-fill"></i>
+                        </div>
+                        <div class="extra-info">
+                            <strong>Bebek & Çocuk Koltuğu (ECE R44)</strong>
+                            <p>Küçük yolcular için temizlenmiş ve standartlara uygun emniyet koltuğu.</p>
+                        </div>
+                        <div class="extra-price">
+                            <strong>+@Model.ChildSeatDailyPrice.ToString("N0") TL</strong>
+                            <span>/ gün</span>
+                        </div>
+                    </label>
+
+                    <!-- HGS -->
+                    <label class="extra-item" for="extraToll">
+                        <div class="form-check m-0">
+                            <input class="form-check-input extra-checkbox" type="checkbox" asp-for="Request.HasTollPass" id="extraToll"
+                                   data-type="onetime" data-price="@Model.TollPassOneTimePrice" />
+                        </div>
+                        <div class="extra-icon">
+                            <i class="bi bi-credit-card-2-front"></i>
+                        </div>
+                        <div class="extra-info">
+                            <strong>HGS / Otoyol Geçiş Paketi</strong>
+                            <p>Köprü ve otoyollarda beklemeden otomatik geçiş (ön yükleme dahil).</p>
+                        </div>
+                        <div class="extra-price">
+                            <strong>+@Model.TollPassOneTimePrice.ToString("N0") TL</strong>
+                            <span>/ tek seferlik</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 3. Sürücü Bilgileri -->
+            <div class="checkout-card">
+                <div class="checkout-card-header">
+                    <span class="step-badge">3</span>
+                    <div>
+                        <h2>Sürücü Bilgileri</h2>
+                        <small>Sözleşme ve teslimat için sürücü kimlik ve iletişim bilgileri</small>
+                    </div>
+                </div>
+                <div class="checkout-card-body">
+                    <div class="driver-requirements-alert mb-3">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>
+                            Bu araç için minimum sürücü yaşı <strong>@Model.Vehicle.MinDriverAge</strong> ve minimum ehliyet süresi <strong>@Model.Vehicle.MinLicenseYears yıldır</strong>.
+                        </span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Request.FirstName" class="form-label fw-bold">Ad</label>
+                            <input class="form-control" asp-for="Request.FirstName" placeholder="Örn: Ahmet" required />
+                            <span asp-validation-for="Request.FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Request.LastName" class="form-label fw-bold">Soyad</label>
+                            <input class="form-control" asp-for="Request.LastName" placeholder="Örn: Yılmaz" required />
+                            <span asp-validation-for="Request.LastName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Request.Email" class="form-label fw-bold">E-posta Adresi</label>
+                            <input type="email" class="form-control" asp-for="Request.Email" placeholder="ahmet@example.com" required />
+                            <span asp-validation-for="Request.Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Request.Phone" class="form-label fw-bold">Cep Telefonu</label>
+                            <input type="tel" class="form-control" asp-for="Request.Phone" placeholder="0532 123 4567" required />
+                            <span asp-validation-for="Request.Phone" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Request.NationalId" class="form-label fw-bold">T.C. Kimlik / Pasaport No</label>
+                            <input class="form-control" asp-for="Request.NationalId" placeholder="11 haneli T.C. Kimlik No" maxlength="20" required />
+                            <span asp-validation-for="Request.NationalId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="Request.BirthDate" class="form-label fw-bold">Doğum Tarihi</label>
+                            <input type="date" class="form-control" asp-for="Request.BirthDate"
+                                   max="@DateTime.Today.AddYears(-Model.Vehicle.MinDriverAge).ToString("yyyy-MM-dd")" required />
+                            <span asp-validation-for="Request.BirthDate" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="Request.LicenseIssueYear" class="form-label fw-bold">Ehliyet Yılı</label>
+                            <input type="number" class="form-control" asp-for="Request.LicenseIssueYear"
+                                   min="1960" max="@(DateTime.Today.Year - Model.Vehicle.MinLicenseYears)" placeholder="Örn: 2018" required />
+                            <span asp-validation-for="Request.LicenseIssueYear" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Request.FlightNumber" class="form-label fw-bold">
+                                Uçuş Numarası <span class="text-muted fw-normal">(Havalimanı teslimatları için opsiyonel)</span>
+                            </label>
+                            <input class="form-control" asp-for="Request.FlightNumber" placeholder="Örn: TK2410" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Request.Notes" class="form-label fw-bold">
+                                Özel İstek / Notlar <span class="text-muted fw-normal">(Opsiyonel)</span>
+                            </label>
+                            <input class="form-control" asp-for="Request.Notes" placeholder="Teslimat ile ilgili özel bir notunuz..." />
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="Request.AcceptTerms" id="acceptTerms" />
+                        <label class="form-check-label" for="acceptTerms">
+                            <a asp-controller="Home" asp-action="Privacy" target="_blank" class="text-decoration-underline fw-bold">
+                                Kiralama Koşulları, İptal Politikası ve KVKK Aydınlatma Metni
+                            </a>'ni okudum, şartları kabul ediyorum.
+                        </label>
+                        <span asp-validation-for="Request.AcceptTerms" class="text-danger d-block small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: SIDEBAR SUMMARY -->
+        <aside class="checkout-sidebar">
+            <div class="summary-card">
+                <div class="vehicle-preview">
+                    <img src="@Model.Vehicle.ImageUrl" alt="@Model.Vehicle.DisplayName" />
+                    <div class="vehicle-preview-info">
+                        <span class="badge bg-dark">@Model.Vehicle.Segment</span>
+                        <h3>@Model.Vehicle.DisplayName</h3>
+                        <p class="specs-pills">
+                            <span><i class="bi bi-gear-fill"></i> @Model.Vehicle.Transmission</span>
+                            <span><i class="bi bi-fuel-pump-fill"></i> @Model.Vehicle.FuelType</span>
+                            <span><i class="bi bi-people-fill"></i> @Model.Vehicle.SeatCount Koltuk</span>
+                            <span><i class="bi bi-briefcase-fill"></i> @Model.Vehicle.BaggageCount Bagaj</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="rental-route-box">
+                    <div class="route-point">
+                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                        <div>
+                            <span class="route-label">Alış:</span>
+                            <strong id="displayPickupLocation">@Model.PickupLocation.Name</strong>
+                            <div class="route-date" id="displayPickupDate">@Model.Request.PickupDate.ToString("dd MMMM yyyy, dddd")</div>
+                        </div>
+                    </div>
+                    <div class="route-line"></div>
+                    <div class="route-point">
+                        <i class="bi bi-geo-fill text-success"></i>
+                        <div>
+                            <span class="route-label">İade:</span>
+                            <strong id="displayReturnLocation">@(Model.Locations.FirstOrDefault(l => l.Id == Model.Request.ReturnLocationId)?.Name ?? Model.PickupLocation.Name)</strong>
+                            <div class="route-date" id="displayReturnDate">@Model.Request.ReturnDate.ToString("dd MMMM yyyy, dddd")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <!-- Price Calculations -->
+                <div class="price-breakdown">
+                    <div class="price-line">
+                        <span>
+                            Günlük Araç Kirası
+                            <small class="d-block text-muted">@Model.Vehicle.DailyPrice.ToString("N0") TL x <span id="daysCount">@Model.TotalDays</span> Gün</small>
+                        </span>
+                        <strong id="vehiclePriceTotal">@Model.VehicleTotal.ToString("N0") TL</strong>
+                    </div>
+
+                    <div class="price-line" id="extrasPriceRow" style="@(Model.CalculateExtrasTotal() > 0 ? "" : "display: none;")">
+                        <span>Ekstra Paketler & Hizmetler</span>
+                        <strong id="extrasPriceTotal">@Model.CalculateExtrasTotal().ToString("N0") TL</strong>
+                    </div>
+
+                    <div class="price-line highlight-total">
+                        <span>Ödenecek Toplam Tutar (KDV Dahil)</span>
+                        <strong class="grand-total" id="grandPriceTotal">@Model.GrandTotal.ToString("N0") TL</strong>
+                    </div>
+
+                    <div class="deposit-notice">
+                        <i class="bi bi-shield-lock-fill"></i>
+                        <div>
+                            <strong>Provizyon / Depozito Tutarı: @Model.Vehicle.DepositAmount.ToString("N0") TL</strong>
+                            <p>Araç teslimi sırasında kredi kartınızdan bloke edilir, araç eksiksiz teslim edildiğinde iade edilir.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="submit-action-area">
+                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold py-3 shadow-sm" id="btnSubmitBooking">
+                        <i class="bi bi-check2-circle me-1"></i> Rezervasyonu Tamamla
+                    </button>
+                    <p class="secure-badge text-center text-muted mt-2 mb-0">
+                        <i class="bi bi-lock-fill text-success"></i> 256-Bit SSL ile güvenli işlem • Ofiste veya Online Ödeme
+                    </p>
+                </div>
+            </div>
+
+            <!-- Trust features -->
+            <div class="trust-cards">
+                <div class="trust-item">
+                    <i class="bi bi-arrow-repeat text-primary"></i>
+                    <div>
+                        <strong>Ücretsiz İptal Garantisi</strong>
+                        <p>Alış saatine 24 saat kalana kadar kesintisiz iptal hakkı.</p>
+                    </div>
+                </div>
+                <div class="trust-item">
+                    <i class="bi bi-headset text-success"></i>
+                    <div>
+                        <strong>7/24 Kesintisiz Destek</strong>
+                        <p>Yolculuk boyunca acil yol yardımı ve çağrı merkezi desteği.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        if (window.jQuery && window.jQuery.validator && window.jQuery.validator.unobtrusive) {
+            jQuery.validator.addMethod("mustbetrue", function (value, element, param) {
+                return element.checked;
+            });
+            jQuery.validator.unobtrusive.adapters.addBool("mustbetrue");
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const dailyPrice = @Model.Vehicle.DailyPrice;
+            const insurancePrice = @Model.InsuranceDailyPrice;
+            const additionalDriverPrice = @Model.AdditionalDriverDailyPrice;
+            const childSeatPrice = @Model.ChildSeatDailyPrice;
+            const tollPassPrice = @Model.TollPassOneTimePrice;
+
+            const pickupDateInput = document.getElementById("pickupDateInput");
+            const returnDateInput = document.getElementById("returnDateInput");
+            const pickupLocationSelect = document.getElementById("pickupLocationSelect");
+            const returnLocationSelect = document.getElementById("returnLocationSelect");
+
+            const displayPickupLocation = document.getElementById("displayPickupLocation");
+            const displayReturnLocation = document.getElementById("displayReturnLocation");
+            const displayPickupDate = document.getElementById("displayPickupDate");
+            const displayReturnDate = document.getElementById("displayReturnDate");
+
+            const daysCountEl = document.getElementById("daysCount");
+            const vehiclePriceTotalEl = document.getElementById("vehiclePriceTotal");
+            const extrasPriceRow = document.getElementById("extrasPriceRow");
+            const extrasPriceTotalEl = document.getElementById("extrasPriceTotal");
+            const grandPriceTotalEl = document.getElementById("grandPriceTotal");
+
+            const checkboxes = document.querySelectorAll(".extra-checkbox");
+
+            function formatDateTurkish(dateStr) {
+                if (!dateStr) return "";
+                const date = new Date(dateStr + "T00:00:00");
+                if (isNaN(date.getTime())) return dateStr;
+                return date.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", weekday: "long" });
+            }
+
+            function updateCalculations() {
+                const pDateVal = pickupDateInput.value;
+                const rDateVal = returnDateInput.value;
+
+                let days = 1;
+                if (pDateVal && rDateVal) {
+                    const pDate = new Date(pDateVal + "T00:00:00");
+                    const rDate = new Date(rDateVal + "T00:00:00");
+                    const diffTime = rDate - pDate;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    days = diffDays > 0 ? diffDays : 1;
+                }
+
+                daysCountEl.textContent = days;
+                displayPickupDate.textContent = formatDateTurkish(pDateVal);
+                displayReturnDate.textContent = formatDateTurkish(rDateVal);
+
+                if (pickupLocationSelect && displayPickupLocation) {
+                    displayPickupLocation.textContent = pickupLocationSelect.options[pickupLocationSelect.selectedIndex]?.text.split("(")[0].trim() || "";
+                }
+                if (returnLocationSelect && displayReturnLocation) {
+                    displayReturnLocation.textContent = returnLocationSelect.options[returnLocationSelect.selectedIndex]?.text.split("(")[0].trim() || "";
+                }
+
+                const vehicleTotal = dailyPrice * days;
+                vehiclePriceTotalEl.textContent = vehicleTotal.toLocaleString("tr-TR") + " TL";
+
+                let extrasTotal = 0;
+                if (document.getElementById("extraInsurance")?.checked) extrasTotal += insurancePrice * days;
+                if (document.getElementById("extraDriver")?.checked) extrasTotal += additionalDriverPrice * days;
+                if (document.getElementById("extraChildSeat")?.checked) extrasTotal += childSeatPrice * days;
+                if (document.getElementById("extraToll")?.checked) extrasTotal += tollPassPrice;
+
+                if (extrasTotal > 0) {
+                    extrasPriceRow.style.display = "flex";
+                    extrasPriceTotalEl.textContent = extrasTotal.toLocaleString("tr-TR") + " TL";
+                } else {
+                    extrasPriceRow.style.display = "none";
+                }
+
+                const grandTotal = vehicleTotal + extrasTotal;
+                grandPriceTotalEl.textContent = grandTotal.toLocaleString("tr-TR") + " TL";
+            }
+
+            pickupDateInput?.addEventListener("change", function () {
+                if (pickupDateInput.value) {
+                    returnDateInput.min = pickupDateInput.value;
+                    if (returnDateInput.value && returnDateInput.value <= pickupDateInput.value) {
+                        const nextDay = new Date(pickupDateInput.value + "T00:00:00");
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        returnDateInput.value = nextDay.toISOString().split("T")[0];
+                    }
+                }
+                updateCalculations();
+            });
+
+            returnDateInput?.addEventListener("change", updateCalculations);
+            pickupLocationSelect?.addEventListener("change", function () {
+                if (!returnLocationSelect.value || returnLocationSelect.selectedIndex === 0) {
+                    returnLocationSelect.value = pickupLocationSelect.value;
+                }
+                updateCalculations();
+            });
+            returnLocationSelect?.addEventListener("change", updateCalculations);
+
+            checkboxes.forEach(cb => cb.addEventListener("change", updateCalculations));
+
+            updateCalculations();
+        });
+    </script>
+}

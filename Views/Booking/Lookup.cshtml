@@ -1,0 +1,192 @@
+@model aspproject.Models.BookingLookupViewModel
+
+@{
+    ViewData["Title"] = "Rezervasyon Sorgula & Yönet";
+}
+
+<div class="lookup-container">
+    <div class="lookup-header">
+        <h1><i class="bi bi-search text-primary me-2"></i> Rezervasyon Sorgula</h1>
+        <p class="text-muted">Rezervasyon detaylarınızı görüntülemek, yazdırmak veya iptal etmek için PNR kodunuzu giriniz.</p>
+    </div>
+
+    <!-- Search Box Card -->
+    <div class="lookup-box-card">
+        <form asp-controller="Booking" asp-action="Lookup" method="post" class="lookup-form">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label asp-for="BookingCode" class="form-label fw-bold">Rezervasyon Kodu (PNR)</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-ticket-detailed-fill"></i></span>
+                        <input asp-for="BookingCode" class="form-control" placeholder="Örn: REZ-2026-001 veya REZ-12345" />
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="ContactInfo" class="form-label fw-bold">E-posta veya Telefon</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                        <input asp-for="ContactInfo" class="form-control" placeholder="Örn: ahmet@example.com veya 0532..." />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
+                        <i class="bi bi-search me-1"></i> Sorgula
+                    </button>
+                </div>
+            </div>
+            <div class="demo-tip mt-3">
+                <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                <small class="text-muted">
+                    Test için hazır rezervasyon: PNR: <strong>REZ-2026-001</strong> | E-posta: <strong>ahmet.yilmaz@example.com</strong>
+                </small>
+            </div>
+        </form>
+    </div>
+
+    <!-- Feedback Alerts -->
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+            <strong>@Model.SuccessMessage</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning alert-dismissible fade show mt-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+            <span>@Model.ErrorMessage</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+        </div>
+    }
+
+    <!-- Result Display -->
+    @if (Model.FoundBooking != null)
+    {
+        var b = Model.FoundBooking;
+        <div class="booking-result-card mt-4">
+            <div class="result-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <span class="pnr-tag">PNR: <strong>@b.BookingCode</strong></span>
+                    <small class="text-muted ms-2">Oluşturulma: @b.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                </div>
+                <div>
+                    @if (b.Status == aspproject.Models.BookingStatus.Confirmed)
+                    {
+                        <span class="badge bg-success fs-6"><i class="bi bi-check-circle me-1"></i> Onaylandı</span>
+                    }
+                    else if (b.Status == aspproject.Models.BookingStatus.Cancelled)
+                    {
+                        <span class="badge bg-danger fs-6"><i class="bi bi-x-circle me-1"></i> İptal Edildi</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-info fs-6"><i class="bi bi-flag me-1"></i> @b.Status</span>
+                    }
+                </div>
+            </div>
+
+            <div class="result-body">
+                <div class="row g-4">
+                    <div class="col-md-4 text-center">
+                        <img src="@b.Vehicle.ImageUrl" alt="@b.Vehicle.DisplayName" class="img-fluid rounded border mb-2 result-car-img" />
+                        <h4 class="mb-1">@b.Vehicle.DisplayName</h4>
+                        <span class="badge bg-light text-dark border">@b.Vehicle.Segment</span>
+                        <div class="small text-muted mt-2">
+                            <span>@b.Vehicle.Transmission</span> • <span>@b.Vehicle.FuelType</span> • <span>@b.Vehicle.SeatCount Koltuk</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt text-danger me-1"></i> Kiralama Bilgileri</h5>
+                        <ul class="list-unstyled mb-3">
+                            <li class="mb-2">
+                                <strong>Alış Lokasyonu:</strong> @b.PickupLocation.Name
+                                <div class="text-muted small">@b.PickupDate.ToString("dd MMMM yyyy, dddd")</div>
+                            </li>
+                            <li class="mb-2">
+                                <strong>İade Lokasyonu:</strong> @b.ReturnLocation.Name
+                                <div class="text-muted small">@b.ReturnDate.ToString("dd MMMM yyyy, dddd")</div>
+                            </li>
+                            <li class="mb-2">
+                                <strong>Kiralama Süresi:</strong> @b.TotalDays Gün
+                            </li>
+                            <li class="mb-2">
+                                <strong>Sürücü:</strong> @b.FullName (@b.Email)
+                            </li>
+                        </ul>
+
+                        <h6 class="fw-bold"><i class="bi bi-shield-check text-success me-1"></i> Ekstra Hizmetler</h6>
+                        <div class="small">
+                            @if (!b.HasFullInsurance && !b.HasAdditionalDriver && !b.HasChildSeat && !b.HasTollPass)
+                            {
+                                <span class="text-muted">Ekstra hizmet seçilmedi.</span>
+                            }
+                            else
+                            {
+                                <ul class="mb-0 ps-3">
+                                    @if (b.HasFullInsurance) { <li>Tam Kasko Güvence Paketi</li> }
+                                    @if (b.HasAdditionalDriver) { <li>Ek Sürücü Hizmeti</li> }
+                                    @if (b.HasChildSeat) { <li>Çocuk Koltuğu</li> }
+                                    @if (b.HasTollPass) { <li>HGS Geçiş Paketi</li> }
+                                </ul>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 border-start">
+                        <div class="price-summary-box p-3 bg-light rounded text-center">
+                            <small class="text-muted d-block">Toplam Kiralama Tutarı</small>
+                            <h3 class="text-primary fw-black mb-1">@b.GrandTotal.ToString("N0") TL</h3>
+                            <small class="text-muted d-block mb-3">KDV Dahil (@b.TotalDays gün)</small>
+                            <div class="small text-muted border-top pt-2">
+                                <strong>Depozito:</strong> @b.DepositAmount.ToString("N0") TL
+                            </div>
+                        </div>
+
+                        <div class="actions-stack mt-3">
+                            <a asp-controller="Booking" asp-action="Confirmation" asp-route-code="@b.BookingCode" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                <i class="bi bi-printer me-1"></i> Onay Belgesini Aç
+                            </a>
+
+                            @if (b.Status == aspproject.Models.BookingStatus.Confirmed)
+                            {
+                                <button type="button" class="btn btn-outline-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                    <i class="bi bi-trash me-1"></i> Rezervasyonu İptal Et
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancel Confirmation Modal -->
+        <div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form asp-controller="Booking" asp-action="Cancel" method="post">
+                        <input type="hidden" name="code" value="@b.BookingCode" />
+                        <input type="hidden" name="contactInfo" value="@b.Email" />
+                        <div class="modal-header">
+                            <h5 class="modal-title text-danger" id="cancelModalLabel">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Rezervasyonu İptal Et
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p><strong>@b.BookingCode</strong> numaralı <strong>@b.Vehicle.DisplayName</strong> rezervasyonunuzu iptal etmek istediğinize emin misiniz?</p>
+                            <p class="text-muted small mb-0">Ücretsiz iptal politikamız gereği herhangi bir ücret veya ceza kesilmeyecektir.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                            <button type="submit" class="btn btn-danger fw-bold">Evet, İptal Et</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>

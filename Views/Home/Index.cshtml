@@ -1,0 +1,221 @@
+@model HomeIndexViewModel
+
+@{
+    ViewData["Title"] = "Araç Kiralama - En Uygun Fiyatlarla Güvenli Kiralama";
+    var pickup = Model.Search.PickupDate ?? DateOnly.FromDateTime(DateTime.Today.AddDays(1));
+    var returnDate = Model.Search.ReturnDate ?? pickup.AddDays(3);
+    int rentalDays = Math.Max(1, returnDate.DayNumber - pickup.DayNumber);
+}
+
+<section class="hero-section">
+    <div class="hero-content">
+        <p class="eyebrow"><i class="bi bi-shield-check"></i> Hızlı, Güvenli, Şeffaf Fiyatlı</p>
+        <h1>Yolculuğun için doğru aracı dakikalar içinde kirala.</h1>
+        <p class="hero-copy">
+            Havalimanı ve şehir merkezi teslimat noktaları, sıfır gizli ücret ve 7/24 yol desteğiyle hayalindeki yolculuğa başla.
+        </p>
+
+        <form class="booking-panel" method="get" asp-controller="Home" asp-action="Index">
+            <label asp-for="Search.LocationId">
+                <i class="bi bi-geo-alt-fill text-danger me-1"></i> Alış Lokasyonu
+                <select class="form-select" asp-for="Search.LocationId" name="LocationId">
+                    @foreach (var location in Model.Locations)
+                    {
+                        <option value="@location.Id">@location.Name (@location.City)</option>
+                    }
+                </select>
+            </label>
+            <label asp-for="Search.PickupDate">
+                <i class="bi bi-calendar-event me-1 text-primary"></i> Alış Tarihi
+                <input class="form-control" asp-for="Search.PickupDate" name="PickupDate" type="date"
+                       min="@DateTime.Today.ToString("yyyy-MM-dd")" value="@pickup.ToString("yyyy-MM-dd")" />
+            </label>
+            <label asp-for="Search.ReturnDate">
+                <i class="bi bi-calendar-check me-1 text-success"></i> Dönüş Tarihi
+                <input class="form-control" asp-for="Search.ReturnDate" name="ReturnDate" type="date"
+                       min="@pickup.ToString("yyyy-MM-dd")" value="@returnDate.ToString("yyyy-MM-dd")" />
+            </label>
+            <label asp-for="Search.Segment">
+                <i class="bi bi-sliders me-1"></i> Araç Sınıfı
+                <select class="form-select" asp-for="Search.Segment" name="Segment">
+                    <option value="">Tümü (@Model.Vehicles.Count araç)</option>
+                    @foreach (var segment in Model.Segments)
+                    {
+                        <option value="@segment">@segment</option>
+                    }
+                </select>
+            </label>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-search me-1"></i> Araç Bul
+            </button>
+        </form>
+    </div>
+</section>
+
+<section class="stats-strip" aria-label="Hizmet özeti">
+    <div>
+        <strong>150+</strong>
+        <span>Hazır ve Bakımlı Araç</span>
+    </div>
+    <div>
+        <strong>@Model.Locations.Count Nokta</strong>
+        <span>Havalimanı & Şehir Merkezi</span>
+    </div>
+    <div>
+        <strong>7/24</strong>
+        <span>Kesintisiz Yol Desteği</span>
+    </div>
+    <div>
+        <strong>%99</strong>
+        <span>Müşteri Memnuniyeti</span>
+    </div>
+</section>
+
+<!-- Filter badges / quick segment switch -->
+<section class="quick-filter-strip">
+    <div class="quick-filter-container">
+        <span class="filter-title"><i class="bi bi-funnel-fill me-1"></i> Hızlı Filtre:</span>
+        <a asp-controller="Home" asp-action="Index"
+           asp-route-locationId="@Model.Search.LocationId"
+           asp-route-pickupDate="@pickup.ToString("yyyy-MM-dd")"
+           asp-route-returnDate="@returnDate.ToString("yyyy-MM-dd")"
+           class="badge-filter @(string.IsNullOrEmpty(Model.Search.Segment) ? "active" : "")">Tümü</a>
+        @foreach (var seg in Model.Segments)
+        {
+            <a asp-controller="Home" asp-action="Index"
+               asp-route-locationId="@Model.Search.LocationId"
+               asp-route-segment="@seg"
+               asp-route-pickupDate="@pickup.ToString("yyyy-MM-dd")"
+               asp-route-returnDate="@returnDate.ToString("yyyy-MM-dd")"
+               class="badge-filter @(Model.Search.Segment == seg ? "active" : "")">@seg</a>
+        }
+    </div>
+</section>
+
+<section class="section-heading">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+        <div>
+            <p class="eyebrow">Müsait Araçlar</p>
+            <h2>@(Model.SelectedLocation?.Name ?? "Seçilen Lokasyon") için Araçlar</h2>
+            <p class="result-summary">
+                <strong>@Model.Vehicles.Count araç listeleniyor</strong> •
+                <span>Kiralama Süresi: <strong>@rentalDays Gün</strong> (@pickup.ToString("dd.MM.yyyy") - @returnDate.ToString("dd.MM.yyyy"))</span>
+            </p>
+        </div>
+        <div class="lookup-shortcut-box">
+            <a asp-controller="Booking" asp-action="Lookup" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-ticket-perforated me-1"></i> Mevcut Rezervasyonunu Sorgula
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="car-grid">
+    @if (Model.Vehicles.Count == 0)
+    {
+        <div class="empty-result">
+            <i class="bi bi-search fs-1 text-muted mb-2 d-block"></i>
+            <h3>Bu kriterlere uygun müsait araç bulunamadı.</h3>
+            <p>Farklı bir lokasyon veya araç sınıfı seçerek tekrar arama yapabilirsiniz.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-3">Tüm Araçları Göster</a>
+        </div>
+    }
+    else
+    {
+        @foreach (var vehicle in Model.Vehicles)
+        {
+            var totalEstimatedPrice = vehicle.DailyPrice * rentalDays;
+            <article class="car-card @(vehicle.IsFeatured ? "featured" : null)">
+                <div class="car-image-container">
+                    <img src="@vehicle.ImageUrl" alt="@vehicle.DisplayName kiralık araç" loading="lazy" />
+                    @if (vehicle.IsFeatured)
+                    {
+                        <span class="badge-featured"><i class="bi bi-star-fill"></i> Öne Çıkan</span>
+                    }
+                    <span class="badge-segment">@vehicle.Segment</span>
+                </div>
+                <div class="car-card-body">
+                    <div class="car-card-header-info">
+                        <h3>@vehicle.DisplayName</h3>
+                        <small class="text-muted">@vehicle.Year Model</small>
+                    </div>
+
+                    <div class="car-specs-grid">
+                        <div class="spec-item" title="Vites Türü">
+                            <i class="bi bi-gear-fill"></i>
+                            <span>@vehicle.Transmission</span>
+                        </div>
+                        <div class="spec-item" title="Yakıt Türü">
+                            <i class="bi bi-fuel-pump-fill"></i>
+                            <span>@vehicle.FuelType</span>
+                        </div>
+                        <div class="spec-item" title="Koltuk Kapasitesi">
+                            <i class="bi bi-people-fill"></i>
+                            <span>@vehicle.SeatCount Kişilik</span>
+                        </div>
+                        <div class="spec-item" title="Bagaj Hacmi">
+                            <i class="bi bi-briefcase-fill"></i>
+                            <span>@vehicle.BaggageCount Valiz</span>
+                        </div>
+                    </div>
+
+                    <div class="car-conditions-strip">
+                        <span><i class="bi bi-speedometer2"></i> @vehicle.DailyMileageLimit km/gün</span>
+                        <span><i class="bi bi-person-check"></i> Yaş: @vehicle.MinDriverAge+</span>
+                        <span><i class="bi bi-shield-lock"></i> Depozito: @vehicle.DepositAmount.ToString("N0") TL</span>
+                    </div>
+
+                    <div class="price-row">
+                        <div class="price-details">
+                            <span class="daily-price"><strong>@vehicle.DailyPrice.ToString("N0") TL</strong> / gün</span>
+                            <span class="total-estimated-price">@rentalDays Gün Toplam: <strong>@totalEstimatedPrice.ToString("N0") TL</strong></span>
+                        </div>
+                        <a asp-controller="Booking" asp-action="Checkout"
+                           asp-route-vehicleId="@vehicle.Id"
+                           asp-route-pickupLocationId="@Model.Search.LocationId"
+                           asp-route-pickupDate="@pickup.ToString("yyyy-MM-dd")"
+                           asp-route-returnDate="@returnDate.ToString("yyyy-MM-dd")"
+                           class="btn @(vehicle.IsFeatured ? "btn-primary" : "btn-outline-dark") btn-reserve">
+                            <i class="bi bi-arrow-right-circle me-1"></i> Rezerve Et
+                        </a>
+                    </div>
+                </div>
+            </article>
+        }
+    }
+</section>
+
+<section class="benefit-section">
+    <div>
+        <p class="eyebrow">Neden YolcuRent?</p>
+        <h2>Rezervasyondan teslimata kadar şeffaf ve güvenli deneyim.</h2>
+        <p>
+            Gizli ücret yok, teslimat sırasında sürpriz masraf yok. Sözleşme şartlarımız açık,
+            destek ekibimiz 7/24 telefonun başında.
+        </p>
+        <div class="support-box-inline mt-4">
+            <i class="bi bi-telephone-fill text-danger fs-3 me-3"></i>
+            <div>
+                <strong>Çağrı Merkezi & Rezervasyon Destek</strong>
+                <p class="m-0 fs-5 fw-bold text-dark">0850 123 45 67</p>
+            </div>
+        </div>
+    </div>
+    <div class="benefit-list">
+        <article>
+            <span>01</span>
+            <h3>Temiz, Bakımlı ve Yeni Model Filo</h3>
+            <p>Her teslimat öncesinde 40 nokta güvenlik kontrolü ve detaylı antibakteriyel temizlik yapılır.</p>
+        </article>
+        <article>
+            <span>02</span>
+            <h3>Esnek ve Havalimanı Teslimatı</h3>
+            <p>Uçuşunuz rötar yapsa dahi uçuş numaranızı takip ederek aracınızı vaktinde hazır tutuyoruz.</p>
+        </article>
+        <article>
+            <span>03</span>
+            <h3>Koşulsuz ve Ücretsiz İptal</h3>
+            <p>Alış saatine 24 saat kalana kadar tek tıkla cezasız ve kesintisiz rezervasyon iptali.</p>
+        </article>
+    </div>
+</section>

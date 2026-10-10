@@ -1,0 +1,143 @@
+@{
+    ViewData["Title"] = "Kiralama Koşulları & Sıkça Sorulan Sorular";
+}
+
+<div class="terms-page-container">
+    <div class="terms-header text-center">
+        <span class="badge bg-primary px-3 py-2 fs-6 mb-2">Şeffaf ve Güvenli Kiralama</span>
+        <h1>Kiralama Koşulları ve Politikalarımız</h1>
+        <p class="text-muted lead">
+            YolcuRent ile yapacağınız tüm kiralamalarda geçerli olan sürücü şartları, depozito, kasko ve iptal süreçleri aşağıda özetlenmiştir.
+        </p>
+    </div>
+
+    <div class="terms-content">
+        <!-- 1. Sürücü Yaşı ve Ehliyet -->
+        <div class="terms-card">
+            <div class="terms-card-icon text-primary">
+                <i class="bi bi-person-badge-fill"></i>
+            </div>
+            <div class="terms-card-body">
+                <h3>1. Sürücü Yaşı ve Ehliyet Şartları</h3>
+                <ul>
+                    <li><strong>Ekonomik ve Kompakt Sınıf Araçlar:</strong> Minimum 21 yaş ve en az 1 yıllık geçerli sürücü belgesi zorunludur.</li>
+                    <li><strong>SUV ve Aile Sınıfı Araçlar:</strong> Minimum 23 yaş ve en az 2 yıllık geçerli sürücü belgesi zorunludur.</li>
+                    <li><strong>Premium ve Lüks Araçlar:</strong> Minimum 25 yaş ve en az 3 yıllık geçerli sürücü belgesi zorunludur.</li>
+                    <li>Kiralama sırasında sürücü belgesinin aslı ve T.C. Kimlik Kartı / Pasaport mutlaka ibraz edilmelidir.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 2. Depozito ve Provizyon -->
+        <div class="terms-card">
+            <div class="terms-card-icon text-warning">
+                <i class="bi bi-credit-card-2-front-fill"></i>
+            </div>
+            <div class="terms-card-body">
+                <h3>2. Teminat (Provizyon / Depozito) Süreci</h3>
+                <ul>
+                    <li>Araç teslimi sırasında ana sürücünün adına düzenlenmiş kredi kartından araç grubuna göre <strong>2.000 TL ile 5.000 TL</strong> arasında ön provizyon bloke edilir.</li>
+                    <li>Nakit veya banka kartı (Debit kart) ile provizyon alınamamaktadır.</li>
+                    <li>Provizyon bedeli, aracın eksiksiz teslim alınmasının ve varsa otoyol/köprü (HGS) geçiş ücretlerinin mahsup edilmesinin ardından <strong>en geç 3-7 iş günü</strong> içerisinde bankanıza iade edilir.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 3. İptal ve Değişiklik Politikası -->
+        <div class="terms-card">
+            <div class="terms-card-icon text-success">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <div class="terms-card-body">
+                <h3>3. Rezervasyon İptal ve Değişiklik Garantisi</h3>
+                <ul>
+                    <li><strong>Ücretsiz İptal:</strong> Araç alış saatine 24 saatten daha fazla süre kala yapılan tüm iptaller tamamen <strong>kesintisiz ve ücretsizdir</strong>.</li>
+                    <li>Rezervasyonunuzu sitemizdeki <a asp-controller="Booking" asp-action="Lookup" class="fw-bold">Rezervasyon Sorgula</a> sayfasından PNR kodunuzla tek tıkla iptal edebilirsiniz.</li>
+                    <li>Alış saatine 24 saatten az kalan iptallerde 1 günlük kira bedeli kesinti uygulanabilir.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 4. Kasko ve Sigorta Güvenceleri -->
+        <div class="terms-card">
+            <div class="terms-card-icon text-danger">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div class="terms-card-body">
+                <h3>4. Kasko, Trafik Sigortası ve Güvence Paketleri</h3>
+                <ul>
+                    <li>Tüm araçlarımız Zorunlu Mali Mesuliyet (Trafik) ve Kasko sigortasına sahiptir.</li>
+                    <li>Muafiyetsiz <strong>Tam Kasko Paketi</strong> satın alındığında lastik, cam, far hasarları ve küçük çizikler muafiyet aranmaksızın teminat altına alınır.</li>
+                    <li>Herhangi bir hasar durumunda polis/jandarma kaza raporu tutulması ve alkol testi alınması yasal zorunluluktur.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 5. Kilometre ve Yakıt Politikası -->
+        <div class="terms-card">
+            <div class="terms-card-icon text-info">
+                <i class="bi bi-fuel-pump-fill"></i>
+            </div>
+            <div class="terms-card-body">
+                <h3>5. Kilometre Sınırı ve Yakıt Esası</h3>
+                <ul>
+                    <li>Araçlarımız günlük modeline göre <strong>300 - 400 km</strong> kullanım hakkı sunmaktadır. Km aşımında km başına sözleşmedeki ek ücret yansıtılır.</li>
+                    <li><strong>Aynı Seviye Yakıt:</strong> Araç teslim alındığı yakıt seviyesinde geri iade edilmelidir. Eksik yakıt ile teslimatlarda yakıt bedeli ve servis ücreti tahsil edilir.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SSS -->
+        <div class="faq-section mt-5">
+            <h2 class="text-center mb-4">Sıkça Sorulan Sorular (SSS)</h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            Rezervasyon için kredi kartı zorunlu mu?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Evet. Araç teslimi sırasında sürücünün kendi adına kayıtlı bir kredi kartına provizyon (depozito) bloke edilmesi güvenlik prosedürümüz gereği zorunludur.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Uçağım rötar yaparsa rezervasyonum iptal olur mu?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Hayır! Rezervasyon sırasında uçuş numaranızı belirttiğiniz takdirde ekibimiz uçuşunuzu canlı takip eder ve inişinize göre aracınızı bekletir.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingThree">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            Aracı farklı bir şehir veya ofise teslim edebilir miyim?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Evet. Rezervasyon yaparken Alış Lokasyonu ile İade Lokasyonunu farklı seçebilirsiniz (Örn: İstanbul Havalimanı alış, Ankara Merkez iade).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="terms-cta text-center mt-5 p-4 rounded bg-white shadow-sm">
+            <h3>Hemen bir araç kiralamak ister misiniz?</h3>
+            <p class="text-muted">En uygun fiyatlarla geniş araç filomuzu inceleyin.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg fw-bold">
+                <i class="bi bi-car-front-fill me-1"></i> Araç Filosuna Göz At
+            </a>
+        </div>
+    </div>
+</div>

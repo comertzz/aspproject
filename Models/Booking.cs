@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace aspproject.Models;
 
 public enum BookingStatus
@@ -9,37 +12,46 @@ public enum BookingStatus
 
 public class Booking
 {
-    public required string BookingCode { get; init; } // e.g. REZ-84920
-    public required Vehicle Vehicle { get; init; }
-    public required RentalLocation PickupLocation { get; init; }
-    public required RentalLocation ReturnLocation { get; init; }
-    public DateOnly PickupDate { get; init; }
-    public DateOnly ReturnDate { get; init; }
-    public int TotalDays { get; init; }
-    public decimal DailyRate { get; init; }
-    public decimal VehicleTotal { get; init; }
-    public decimal ExtrasTotal { get; init; }
-    public decimal GrandTotal { get; init; }
-    public decimal DepositAmount { get; init; }
+    [Key]
+    public string BookingCode { get; set; } = string.Empty; // e.g. REZ-84920
+
+    public int VehicleId { get; set; }
+    public Vehicle Vehicle { get; set; } = null!;
+
+    public int PickupLocationId { get; set; }
+    public RentalLocation PickupLocation { get; set; } = null!;
+
+    public int ReturnLocationId { get; set; }
+    public RentalLocation ReturnLocation { get; set; } = null!;
+
+    public DateOnly PickupDate { get; set; }
+    public DateOnly ReturnDate { get; set; }
+    public int TotalDays { get; set; }
+    public decimal DailyRate { get; set; }
+    public decimal VehicleTotal { get; set; }
+    public decimal ExtrasTotal { get; set; }
+    public decimal GrandTotal { get; set; }
+    public decimal DepositAmount { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Confirmed;
-    public DateTime CreatedAt { get; init; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     // Driver Details
-    public required string FirstName { get; init; }
-    public required string LastName { get; init; }
-    public required string Email { get; init; }
-    public required string Phone { get; init; }
-    public required string NationalId { get; init; }
-    public DateOnly BirthDate { get; init; }
-    public int LicenseIssueYear { get; init; }
-    public string? FlightNumber { get; init; }
-    public string? Notes { get; init; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string NationalId { get; set; } = string.Empty;
+    public DateOnly BirthDate { get; set; }
+    public int LicenseIssueYear { get; set; }
+    public string? FlightNumber { get; set; }
+    public string? Notes { get; set; }
 
     // Extras
-    public bool HasFullInsurance { get; init; }
-    public bool HasAdditionalDriver { get; init; }
-    public bool HasChildSeat { get; init; }
-    public bool HasTollPass { get; init; }
+    public bool HasFullInsurance { get; set; }
+    public bool HasAdditionalDriver { get; set; }
+    public bool HasChildSeat { get; set; }
+    public bool HasTollPass { get; set; }
 
+    [NotMapped]
     public string FullName => $"{FirstName} {LastName}";
 }

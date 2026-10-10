@@ -1,64 +1,18 @@
-using System.Collections.Concurrent;
+using aspproject.Data;
 using aspproject.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace aspproject.Services;
 
 public class BookingService : IBookingService
 {
-    private static readonly ConcurrentDictionary<string, Booking> Bookings = new(StringComparer.OrdinalIgnoreCase);
+    private readonly AppDbContext context;
     private readonly IVehicleCatalogService vehicleCatalogService;
 
-    public BookingService(IVehicleCatalogService vehicleCatalogService)
+    public BookingService(AppDbContext context, IVehicleCatalogService vehicleCatalogService)
     {
+        this.context = context;
         this.vehicleCatalogService = vehicleCatalogService;
-        SeedDemoBooking();
-    }
-
-    private void SeedDemoBooking()
-    {
-        if (Bookings.ContainsKey("REZ-2026-001"))
-        {
-            return;
-        }
-
-        var demoVehicle = vehicleCatalogService.GetVehicleById(1);
-        var demoLocation = vehicleCatalogService.GetLocationById(1);
-
-        if (demoVehicle != null && demoLocation != null)
-        {
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            var booking = new Booking
-            {
-                BookingCode = "REZ-2026-001",
-                Vehicle = demoVehicle,
-                PickupLocation = demoLocation,
-                ReturnLocation = demoLocation,
-                PickupDate = today.AddDays(2),
-                ReturnDate = today.AddDays(5),
-                TotalDays = 3,
-                DailyRate = demoVehicle.DailyPrice,
-                VehicleTotal = demoVehicle.DailyPrice * 3,
-                ExtrasTotal = 900m,
-                GrandTotal = (demoVehicle.DailyPrice * 3) + 900m,
-                DepositAmount = demoVehicle.DepositAmount,
-                Status = BookingStatus.Confirmed,
-                CreatedAt = DateTime.Now.AddHours(-3),
-                FirstName = "Ahmet",
-                LastName = "Yılmaz",
-                Email = "ahmet.yilmaz@example.com",
-                Phone = "05321112233",
-                NationalId = "12345678901",
-                BirthDate = new DateOnly(1994, 5, 15),
-                LicenseIssueYear = 2015,
-                HasFullInsurance = true,
-                HasAdditionalDriver = false,
-                HasChildSeat = false,
-                HasTollPass = false,
-                Notes = "Sabiha Gökçen varışlı uçuş."
-            };
-
-            Bookings.TryAdd(booking.BookingCode, booking);
-        }
     }
 
     public Booking CreateBooking(BookingCheckoutRequest request)
@@ -85,14 +39,14 @@ public class BookingService : IBookingService
         do
         {
             code = $"REZ-{Random.Shared.Next(10000, 99999)}";
-        } while (Bookings.ContainsKey(code));
+        } while (context.Bookings.Any(b => b.BookingCode == code));
 
         var booking = new Booking
         {
             BookingCode = code,
-            Vehicle = vehicle,
-            PickupLocation = pickupLoc,
-            ReturnLocation = returnLoc,
+            VehicleId = vehicle.Id,
+            PickupLocationId = pickupLoc.Id,
+            ReturnLocationId = returnLoc.Id,
             PickupDate = request.PickupDate,
             ReturnDate = request.ReturnDate,
             TotalDays = totalDays,
@@ -118,29 +72,48 @@ public class BookingService : IBookingService
             HasTollPass = request.HasTollPass
         };
 
-        Bookings[code] = booking;
+        context.Bookings.Add(booking);
+        context.SaveChanges();
+
+        // Load navigations
+        booking.Vehicle = vehicle;
+        booking.PickupLocation = pickupLoc;
+        booking.ReturnLocation = returnLoc;
+
         return booking;
     }
 
     public Booking? GetBookingByCode(string bookingCode)
     {
         if (string.IsNullOrWhiteSpace(bookingCode)) return null;
-        Bookings.TryGetValue(bookingCode.Trim(), out var booking);
-        return booking;
+
+        var cleanCode = bookingCode.Trim().ToLower();
+        return context.Bookings
+            .Include(b => b.Vehicle)
+            .Include(b => b.PickupLocation)
+            .Include(b => b.ReturnLocation)
+            .FirstOrDefault(b => b.BookingCode.ToLower() == cleanCode);
     }
 
     public Booking? FindBooking(string? bookingCode, string? contactInfo)
     {
-        var cleanCode = bookingCode?.Trim();
-        var cleanContact = contactInfo?.Trim().ToLowerInvariant();
+        var cleanCode = bookingCode?.Trim().ToLower();
+        var cleanContact = contactInfo?.Trim().ToLower();
+
+        var query = context.Bookings
+            .Include(b => b.Vehicle)
+            .Include(b => b.PickupLocation)
+            .Include(b => b.ReturnLocation)
+            .AsQueryable();
 
         if (!string.IsNullOrEmpty(cleanCode))
         {
-            if (Bookings.TryGetValue(cleanCode, out var matchByCode))
+            var matchByCode = query.FirstOrDefault(b => b.BookingCode.ToLower() == cleanCode);
+            if (matchByCode != null)
             {
                 if (string.IsNullOrEmpty(cleanContact) ||
-                    matchByCode.Email.Equals(cleanContact, StringComparison.OrdinalIgnoreCase) ||
-                    matchByCode.Phone.Contains(cleanContact, StringComparison.OrdinalIgnoreCase))
+                    matchByCode.Email.ToLower() == cleanContact ||
+                    matchByCode.Phone.Contains(cleanContact))
                 {
                     return matchByCode;
                 }
@@ -149,9 +122,9 @@ public class BookingService : IBookingService
 
         if (!string.IsNullOrEmpty(cleanContact))
         {
-            return Bookings.Values.FirstOrDefault(b =>
-                b.Email.Equals(cleanContact, StringComparison.OrdinalIgnoreCase) ||
-                b.Phone.Replace(" ", "").Contains(cleanContact.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
+            return query.FirstOrDefault(b =>
+                b.Email.ToLower() == cleanContact ||
+                b.Phone.Contains(cleanContact));
         }
 
         return null;
@@ -161,9 +134,13 @@ public class BookingService : IBookingService
     {
         if (string.IsNullOrWhiteSpace(bookingCode)) return false;
 
-        if (Bookings.TryGetValue(bookingCode.Trim(), out var booking))
+        var cleanCode = bookingCode.Trim().ToLower();
+        var booking = context.Bookings.FirstOrDefault(b => b.BookingCode.ToLower() == cleanCode);
+
+        if (booking != null)
         {
             booking.Status = BookingStatus.Cancelled;
+            context.SaveChanges();
             return true;
         }
 
@@ -171,5 +148,10 @@ public class BookingService : IBookingService
     }
 
     public IReadOnlyList<Booking> GetAllBookings() =>
-        Bookings.Values.OrderByDescending(b => b.CreatedAt).ToList();
+        context.Bookings
+            .Include(b => b.Vehicle)
+            .Include(b => b.PickupLocation)
+            .Include(b => b.ReturnLocation)
+            .OrderByDescending(b => b.CreatedAt)
+            .ToList();
 }

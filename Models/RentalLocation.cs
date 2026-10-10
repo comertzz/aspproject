@@ -2,11 +2,11 @@ namespace aspproject.Models;
 
 public class RentalLocation
 {
-    public int Id { get; init; }
+    public int Id { get; set; }
 
-    public required string Name { get; init; }
+    public string Name { get; set; } = string.Empty;
 
-    public required string City { get; init; }
+    public string City { get; set; } = string.Empty;
 
-    public bool IsAirport { get; init; }
+    public bool IsAirport { get; set; }
 }
